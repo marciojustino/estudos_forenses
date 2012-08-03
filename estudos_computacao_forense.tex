@@ -1,0 +1,52 @@
+\documentclass[dvips,ruledheader]{abnt}			% header estilo 'plainheader' com uma linha inferior
+% \documentclass[dvips,plainheader]{abnt}			% padrão de header da abnt
+\usepackage[brazil]{babel} 					% linguagem portugues-Br
+\usepackage[T1]{fontenc}
+% \usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc} 					% para aceitar ascentos
+\usepackage[pdftex]{graphicx}
+% \usepackage[pdftex]{hyperref}
+% \usepackage{hyperref}						% incluir links para web
+\usepackage{abnt-alf}
+\usepackage{latexsym}
+\usepackage{psfrag}
+\usepackage{epigraph}
+
+% Glossário não utilizado
+% \usepackage{makeglo}
+% \renewcommand{\glossaryname}{Glossário}
+% \makeglossary
+
+\begin{document}
+\DeclareGraphicsRule{.eps.gz}{eps}{.eps.bb}{`gunzip -c #1}
+
+\include{capa}
+\include{folharosto}
+
+\tableofcontents
+
+\part{Processador}
+\include{processador/index}
+
+\part{Discos Rígidos - HDs}
+\include{hd/index}
+
+\part{Sistemas de Arquivos}
+\include{sistemas_de_arquivos/index}
+
+\part{Sistemas Operacionais}
+\include{sistemas_operacionais/index}
+
+% \include{introducao}
+% \include{objetivo}
+% \include{requisito}
+% \include{configuracao}
+% \include{comportamento}
+% \include{utilizacao}
+% \include{recuperacao}
+% \include{problemas}
+
+% \bibliography{bb}
+% \bibliographystyle{abnt-alf}
+
+\end{document}
