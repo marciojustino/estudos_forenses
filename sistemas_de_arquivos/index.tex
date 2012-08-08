@@ -84,5 +84,148 @@ Cada entrada na MFT possui cerca de 2 KB, onde são armazenados o nome do arquiv
 
 O EFS é um recurso de criptografia permitindo uma maior proteção dos dados por criptografia utilizando chaves públicas. A principal vantagem é que o dono dos arquivos protegidos pode determinar quais usuários prodem acessá-los.
 
-\section{ext3}
+\subsection{Multiple Data Streams}
+
+NTFS suporta multiplos streams de dados, onde o nome da stream identifica um atributo de dados novo no arquivo. O stream, então, é um conjunto exclusivo de atributos de arquivos. Os streams possuem atributos diferentes como bloqueio de arquivo e tamanho mas, possui \emph{\textbf{permissões comuns}}. 
+
+Esse recurso permite gerenciar os dados com uma única unidade. Exemplo de um stream:
+
+{
+\raggedright
+myfile.dat:stream2
+}
+
+Uma biblioteca de arquivos pode existir onde os arquivos são definidos como streams alternativos, como mostra o exemplo:
+
+{
+\raggedright
+library:file1
+:file2
+:file3
+}
+
+Um arquivo pode estar associado a mais de uma aplicação ao mesmo tempo, assim como  Microsoft Word e Microsoft WordPad. Um exemplo da estrutura de arquivo que demonstra a associação múltipla a várias aplicações mas não múltiplos arquivos:
+
+{
+\raggedright
+program:source_file
+:doc_file
+:object_file
+:executable_file
+}
+
+Uma forma de criar um arquivo com stream alternativo:
+
+{
+\raggedright
+echo text > program:source_file
+more < program:source_file
+}
+
+\cite{
+Um detalhe muito importante é que essa funcionalidade está presente somente no NTFS e é incompatível para o FAT, ou seja, se um disco com sistema de arquivo FAT receber a cópia de um arquivo NTFS os streams e outros atributos não suportados pelo FAT serão perdidos sem nenhum aviso.}
+
+\subsection{Change Journal}
+
+O Change Journal é usado pelo NTFS para prover um log persistente de todas alterações feitas em arquivos no volume. \textbf{Para cada volume}, o NTFS usa o change journal para rastrear informações sobre inclusão, remoção e modificação de arquivos.
+
+fonte: \textbf{http://www.readability.com/articles/xhgmtysq}
+
+\section{EXT3}
+
+Possui o recurso de recuperação de falhas, o \emph{\textbf{Journaling}}. Isso poderia ser relevante para a forense pois alguns dados e metadados registrados na área de ``Journal'' do sistema podem significar alguma coisa em uma investigação, principalmente se utilizando o tipo de trabalho ``Journal''.
+
+\subsection{Journaling}
+
+O ext3 trabalha com 3 diferentes tipos de Journaling:
+
+\begin{itemize}
+	\item \textbf{Journal}: grava todas mudanças em sistema de arquivos. É o mais lento dos três modos, mas é o que apresenta maior capacidade de evitar perda de dados;
+	\item \textbf{Ordered}: grava somente mudanças em arquivos \emph{metadata} (arquivos que guardam informações de outros arquivos), mas guarda as atualizações no arquivo de dados antes de fazer as mudanças associadas ao sistema de arquivos. Este é o Journaling padrão nos sistemas de arquivos ext3;
+	\item \textbf{Writeback}: também só grava mudanças para o sistema de arquivo em \emph{metadata}, mas utiliza o processo de escrita do sistema de arquivos em uso para gravação. É o mais rápido de todos, mas o menos confiável.
+\end{itemize}
+
+\subsection{Inode}
+
+Os dados do arquivo são armazenados em unidades chamadas de ``blocos''. Um arquivo também possui um ``inode''. Os blocos e os inodes podem são numerados sequencialmente porém, o inode possui uma sequência diferente da dos blocos. Uma entrada de diretório consiste do nome do arquivo e de um número de inode. O inode também armazena o local dos blocos de dados, como pode ser visto na figura \ref{fig:inode}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/inode.jpg}
+	\caption{Forma como o \emph{inode} armazena o local dos blocos de dados}
+	\label{fig:inode}
+\end{figure}
+
+\begin{itemize}
+	\item Os números dos primeiros 12 blocos são armazenados diretamente no inode - chamados de ``blocos diretos'' (pode ser visto na figura \ref{fig:inode} em ``12 direct pointer to data blocks'');
+	\item O inode contém o número do bloco de um bloco indireto. (pode ser representado na figura \ref{fig:inode} em ``1 indirect pointer''). Um bloco indireto contém os números de blocos de 256 blocos de dados adicionais;
+	\item O inode contém o número do bloco de um bloco duplamente indireto (pode ser visto na figura \ref{fig:inode} em ``1 double ind. po.''). Um bloco duplamente indireto contém os números de blocos de 256 blocos indiretos adicionais; e
+	\item O inode contém o número do bloco de um bloco três vezes indireto. (pode ser visto na figura \ref{fig:inode} em ``1 tripple ind. po.''). Um bloco três vezes indireto contém os números de blocos de 256 blocos duplamente indiretos adicionais.
+\end{itemize}
+
+Sendo assim, o sistema de arquivo ext3 consiste de 5 componentes estruturais.
+
+\begin{itemize}
+	\item Células de armazenamento inode;
+	\item Superblocos distribuídos;
+	\item Mapa de blocos no sistema de arquivos;
+	\item Resumo de emprego de blocos; e
+	\item Conjunto de blocos de dados.
+\end{itemize}
+
+Cada partição de sistema de arquivos é dividida em grupos de blocos. Estruturas como as tabelas de inode são alocadas entre os grupos de blocos para que os blocos que são acessados juntos possam ser armazenados próximos uns dos outros no disco.
+
+Inodes são entradas de tabelas de comprimento fixo, cada uma das quais armazenam informações sobre um arquivo existente no sistema de arquivos.
+
+Os inodes são criados no momento da formatação lógica do hd. Assim é possível redimensionar o número de inodes de acordo com a capacidade do hd e o tipo e tamanho de arquivos que serão armazenados nele. O número de inodes não pode ser ajustado após a formatação inicial.
+
+\subsection{Superbloco}
+
+Registro que descreve as características do sistema de arquivos, conforme a figura \ref{fig:superbloco}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/superbloco.jpg}
+	\caption{Informações do superbloco}
+	\label{fig:superbloco}
+\end{figure}
+
+O superbloco contém informações sobre:
+
+\begin{itemize}
+	\item Comprimento de um bloco de disco;
+	\item Tamanho e localização das tabelas de inodes;
+	\item Mapa de blocos de disco e informações sobre utilização; e
+	\item Tamanho dos grupos de blocos.
+\end{itemize}
+
+O GNU/Linux mantém, para cada sistema de arquivos, um cópia do superbloco em memória RAM. A chamada de sistema ``sync'' despeja os dados sobre os superblocos que estão armazenados em memória cache para seus locais em disco, sincronizando as informações sobre o sistema de arquivos. Essa sincronização torna o sistema de arquivos consistente rapidamente. Essa operação acontece automaticamente em intervalos de 30s para sistemas ext2 e de 5s para sistemas ext3, reduzindo ainda mais a possibilidade de falhas em servidores com intensas atividades de gravação de arquivos.
+
+\subsection{Mapa de Blocos}
+
+É a tabela de blocos livres que o disco possui. Quando da gravação de um arquivo novo, esse mapa é verificado de modo que uma disposição eficiente seja utilizada.
+
+\subsection{Resumos de Empregos de Blocos}
+
+Registram informações básicas sobre os blocos que já se encontram em uso.
+
+Até este ponto os sistemas ext2 e ext3 são idênticos.
+
+\section{ReiserFS}
+
+Possui suporte ao ``journaling'' e atualmente presente como padrão para distribuições GNU/Linux da SuSE, Gentoo e Linspire.
+
+Ele trata toda a partição como se fosse uma única tabela de banco de dados contendo diretórios, arquivos e metadados dentro de uma mesma árvore. Essa característica exigiu o uso de técnicas de indexação mais complexas para tornar os tempos de resposta do ReiserFS mais eficientes comparados com outros sistemas de arquivos. O ReiserFS usa uma árvore \textbf{finita} (número de nós é limitado).
+
+O ReiserFS possui suporte a arquivos maiores que 2GB.
+
+ReiserFS usa árvores balanceadas (B*) para tornar o processo de busca de arquivos, informações sobre segurança e outros metadados mais eficientes.
+
+Outra grande vantagem do ReiserFS é a alocação dinâmica de inodes, já que esse sistema de arquivos não os aloca em espaços fixos ou blocos e sim, aloca o tamanho exato que o arquivo precisa. Em sistemas baseados em inodes fixos, como o EXT3, o espaço no disco é alocado em blocos que variam de 512 a 4096 bytes ou até maior, caso o arquivo exceda um múltiplo exato do tamanho do bloco.
+
+Seu uso de funções hash e árvores balanceadas (B*), ao invés de seqüências infindáveis de inodes, tornam a procura de um arquivo em uma dezena ou em uma grande quantidade uma operação bem rápida.
+
+No caso de um desligamento incorreto do sistema, o ReiserFS é capaz de recuperar a consistência do sistema de arquivos em frações de segundo e a possibilidade de perda de pastas ou partições é nula. Em compensação, os arquivos que eventualmente estiverem sendo gravados no exato momento em que acabou a energia ficarão com seus dados alterados. Você continuará tendo acesso aos arquivos normalmente, mas o conteúdo estará truncado ou incompleto.
+
+Fonte: \textbf{http://www.readability.com/articles/euug5xab}
 
