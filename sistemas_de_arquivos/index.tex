@@ -1,3 +1,47 @@
+\chapter{A Estrutura dos Arquivos}
+
+Um arquivo possui a estrutura:
+
+\begin{itemize}
+	\item Cabeçalho;
+	\item Texto;
+	\item Dados;
+	\item Bits de relocação; e
+	\item Tabela de símbolos.
+\end{itemize}
+
+O cabeçalho começa com o número mágico, que identifica o arquivo com executável (para impedir a execução acidental de um arquivo que não seja desse formato). Na sequência vem o tamanho das várias partes do arquivo, o endereço no qual a execução deve iniciar e alguns bits de sinalização. Após o cabeçalho temos o texto e os dados do programa propriamente ditos, que são carregados na memória e relocados usando bits de relocação. A tabela de símbolos é usada para depuração do arquivo.
+
+\section{Atributos de Arquivo}
+
+Todo sistema operacional associa ao arquivo informações como por exemplo:
+
+\begin{itemize}
+	\item Data e horário de criação;	
+	\item Data e horário de alteração;	
+	\item Data e horário de último acesso;
+	\item Criador do arquivo;
+	\item Proprietário atual do arquivo;
+	\item Flag's de controle;
+	\item Tamanho do arquivo; e
+	\item Proteção do arquivo.
+\end{itemize}
+
+Essas informações extras dos arquivos são conhecidas como atributos do arquivo. Esses atributos variam de um sistema para outro. Alguns atributos são alterados pelo sistema operacional quando ocorre alguma interação com o arquivo para que a ação sobre ele possa ser identificada futuramente.
+
+\section{Esquema do Sistema de Arquivos}
+
+Os sistemas de arquivos são armazenados em discos. O setor 0 do disco é chamado de MBR (Master Boot Record - registro de controle de iniciação do sistema) e é usado para iniciar o computador. O final da MBR contém a tabela de partição, que indica os endereços iniciais e finas de cada partição do disco. Uma delas é marcada como ativa, quando o computador é iniciado, a BIOS lê e executa o MBR. Assim, a primeira coisa que a MBR faz é localizar a partição ativa, ser seu primeiro bloco (bloco de boot) e executá-lo. O programa de bloco de boot carrega o sistema operacional contido na partição.
+
+A figura \ref{fig:esquema_sistemas_arquivos} demonstra como, no geral, é estruturado o sistema de arquivos no disco.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/esquema_sistemas_arquivos.png}
+	\caption{Possível layout de sistema de arquivos}
+	\label{fig:esquema_sistemas_arquivos}
+\end{figure}
+
 \chapter{Capacidade de Armazenamento}
 
 Vimos que a geometria do disco rígido envolve trilhas, setores e cilindros e que em cada setor do disco cabem 512 bytes de informação. Para identificar a capacidade de armazenamento de um disco basta utilizar a geometria, se um disco tem 2.448 cilindros, 16 lados (ou ``cabeças'' de leitura) e 63 setores por trilha, terá 2.448 x 16 x 63 = 2.467.584 setores. Logo, se multiplicarmos a quantidade de setores pela quantidade de informação que cabe em cada setor teremos a capacidade total do disco, que no caso é de 1.263.403.008 bytes, e como cada KB tem 1.024 bytes, dividindo-se por 1.024 uma vez para identificar a quantidade de KB do disco, divide-se novamente para identificar a quantidade em MB e novamente para identificar a quantidade em GB. Sendo assim esse disco teria a capacidade real de 1.18 GB.
@@ -108,22 +152,27 @@ Um arquivo pode estar associado a mais de uma aplicação ao mesmo tempo, assim 
 
 {
 \raggedright
+$
 program:source_file
 :doc_file
 :object_file
 :executable_file
+$
 }
 
 Uma forma de criar um arquivo com stream alternativo:
 
 {
 \raggedright
+$
 echo text > program:source_file
 more < program:source_file
+$
 }
 
-\cite{
-Um detalhe muito importante é que essa funcionalidade está presente somente no NTFS e é incompatível para o FAT, ou seja, se um disco com sistema de arquivo FAT receber a cópia de um arquivo NTFS os streams e outros atributos não suportados pelo FAT serão perdidos sem nenhum aviso.}
+\begin{citacao}
+Um detalhe muito importante é que essa funcionalidade está presente somente no NTFS e é incompatível para o FAT, ou seja, se um disco com sistema de arquivo FAT receber a cópia de um arquivo NTFS os streams e outros atributos não suportados pelo FAT serão perdidos sem nenhum aviso.
+\end{citacao}
 
 \subsection{Change Journal}
 
@@ -145,40 +194,6 @@ O ext3 trabalha com 3 diferentes tipos de Journaling:
 	\item \textbf{Writeback}: também só grava mudanças para o sistema de arquivo em \emph{metadata}, mas utiliza o processo de escrita do sistema de arquivos em uso para gravação. É o mais rápido de todos, mas o menos confiável.
 \end{itemize}
 
-\subsection{Inode}
-
-Os dados do arquivo são armazenados em unidades chamadas de ``blocos''. Um arquivo também possui um ``inode''. Os blocos e os inodes podem são numerados sequencialmente porém, o inode possui uma sequência diferente da dos blocos. Uma entrada de diretório consiste do nome do arquivo e de um número de inode. O inode também armazena o local dos blocos de dados, como pode ser visto na figura \ref{fig:inode}.
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/inode.jpg}
-	\caption{Forma como o \emph{inode} armazena o local dos blocos de dados}
-	\label{fig:inode}
-\end{figure}
-
-\begin{itemize}
-	\item Os números dos primeiros 12 blocos são armazenados diretamente no inode - chamados de ``blocos diretos'' (pode ser visto na figura \ref{fig:inode} em ``12 direct pointer to data blocks'');
-	\item O inode contém o número do bloco de um bloco indireto. (pode ser representado na figura \ref{fig:inode} em ``1 indirect pointer''). Um bloco indireto contém os números de blocos de 256 blocos de dados adicionais;
-	\item O inode contém o número do bloco de um bloco duplamente indireto (pode ser visto na figura \ref{fig:inode} em ``1 double ind. po.''). Um bloco duplamente indireto contém os números de blocos de 256 blocos indiretos adicionais; e
-	\item O inode contém o número do bloco de um bloco três vezes indireto. (pode ser visto na figura \ref{fig:inode} em ``1 tripple ind. po.''). Um bloco três vezes indireto contém os números de blocos de 256 blocos duplamente indiretos adicionais.
-\end{itemize}
-
-Sendo assim, o sistema de arquivo ext3 consiste de 5 componentes estruturais.
-
-\begin{itemize}
-	\item Células de armazenamento inode;
-	\item Superblocos distribuídos;
-	\item Mapa de blocos no sistema de arquivos;
-	\item Resumo de emprego de blocos; e
-	\item Conjunto de blocos de dados.
-\end{itemize}
-
-Cada partição de sistema de arquivos é dividida em grupos de blocos. Estruturas como as tabelas de inode são alocadas entre os grupos de blocos para que os blocos que são acessados juntos possam ser armazenados próximos uns dos outros no disco.
-
-Inodes são entradas de tabelas de comprimento fixo, cada uma das quais armazenam informações sobre um arquivo existente no sistema de arquivos.
-
-Os inodes são criados no momento da formatação lógica do hd. Assim é possível redimensionar o número de inodes de acordo com a capacidade do hd e o tipo e tamanho de arquivos que serão armazenados nele. O número de inodes não pode ser ajustado após a formatação inicial.
-
 \subsection{Superbloco}
 
 Registro que descreve as características do sistema de arquivos, conforme a figura \ref{fig:superbloco}.
@@ -194,16 +209,65 @@ O superbloco contém informações sobre:
 
 \begin{itemize}
 	\item Comprimento de um bloco de disco;
-	\item Tamanho e localização das tabelas de inodes;
+	\item Tamanho e localização das tabelas de i-nodes;
 	\item Mapa de blocos de disco e informações sobre utilização; e
 	\item Tamanho dos grupos de blocos.
 \end{itemize}
 
 O GNU/Linux mantém, para cada sistema de arquivos, um cópia do superbloco em memória RAM. A chamada de sistema ``sync'' despeja os dados sobre os superblocos que estão armazenados em memória cache para seus locais em disco, sincronizando as informações sobre o sistema de arquivos. Essa sincronização torna o sistema de arquivos consistente rapidamente. Essa operação acontece automaticamente em intervalos de 30s para sistemas ext2 e de 5s para sistemas ext3, reduzindo ainda mais a possibilidade de falhas em servidores com intensas atividades de gravação de arquivos.
 
+\begin{citacao}
+A destruição do superbloco deixa o sistema de arquivos ilegível.
+\end{citacao}
+
+\subsection{i-nodes}
+
+I-nodes são entradas de tabelas de comprimento fixo, cada uma das quais armazenam informações sobre um arquivo existente no sistema de arquivos. Cada i-node tem o tamanho fixo de 64 bytes e descreve exatamente um arquivo. O i-node contém informações suficientes para localizar todos os blocos do disco que contenham os dados do arquivo.
+
+Os dados do arquivo são armazenados em unidades chamadas de ``blocos''. Um arquivo também possui um ``i-node''. Os blocos e os i-nodes são numerados sequencialmente porém, o i-node possui uma sequência diferente da dos blocos. Uma entrada de diretório consiste do nome do arquivo e de um número de i-node. O i-node também armazena o local dos blocos de dados, como pode ser visto na figura \ref{fig:inode} e \ref{fig:inode_esquema}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/inode.jpg}
+	\caption{Forma como o \emph{inode} armazena o local dos blocos de dados}
+	\label{fig:inode}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{sistemas_de_arquivos/fig/inode_esquema.jpg}
+	\caption{Esquema do disco em sistemas Unix clássicos.}
+	\label{fig:inode_esquema}
+\end{figure}
+
+\begin{itemize}
+	\item Os números dos primeiros 12 blocos são armazenados diretamente no i-node - chamados de ``blocos diretos'' (pode ser visto na figura \ref{fig:inode} em ``12 direct pointer to data blocks'');
+	\item O i-node contém o número do bloco de um bloco indireto. (pode ser representado na figura \ref{fig:inode} em ``1 indirect pointer''). Um bloco indireto contém os números de blocos de 256 blocos de dados adicionais;
+	\item O i-node contém o número do bloco de um bloco duplamente indireto (pode ser visto na figura \ref{fig:inode} em ``1 double ind. po.''). Um bloco duplamente indireto contém os números de blocos de 256 blocos indiretos adicionais; e
+	\item O i-node contém o número do bloco de um bloco três vezes indireto. (pode ser visto na figura \ref{fig:inode} em ``1 tripple ind. po.''). Um bloco três vezes indireto contém os números de blocos de 256 blocos duplamente indiretos adicionais.
+\end{itemize}
+
+Sendo assim, o sistema de arquivo ext3 consiste de 5 componentes estruturais.
+
+\begin{itemize}
+	\item Células de armazenamento i-node;
+	\item Superblocos distribuídos;
+	\item Mapa de blocos no sistema de arquivos;
+	\item Resumo de emprego de blocos; e
+	\item Conjunto de blocos de dados.
+\end{itemize}
+
+Cada partição de sistema de arquivos é dividida em grupos de blocos. Estruturas como as tabelas de i-node são alocadas entre os grupos de blocos para que os blocos que são acessados juntos possam ser armazenados próximos uns dos outros no disco.
+
+Os i-nodes são criados no momento da formatação lógica do hd. Assim é possível redimensionar o número de i-nodes de acordo com a capacidade do hd, tipo e tamanho de arquivos que serão armazenados nele. O número de i-nodes não pode ser ajustado após a formatação inicial.
+
 \subsection{Mapa de Blocos}
 
 É a tabela de blocos livres que o disco possui. Quando da gravação de um arquivo novo, esse mapa é verificado de modo que uma disposição eficiente seja utilizada.
+
+\subsection{Blocos de Dados}
+
+Após os i-nodes aparecem os blocos de dados. Neles são armazenados todos os arquivos (e diretórios também). Se um arquivo ou diretório é constituído de mais de um bloco, eles não precisam estar em sequência no disco, pelo contrário, normalmente os blocos de um arquivo grande estão espalhados e dispersos por todo o disco.
 
 \subsection{Resumos de Empregos de Blocos}
 
@@ -221,9 +285,9 @@ O ReiserFS possui suporte a arquivos maiores que 2GB.
 
 ReiserFS usa árvores balanceadas (B*) para tornar o processo de busca de arquivos, informações sobre segurança e outros metadados mais eficientes.
 
-Outra grande vantagem do ReiserFS é a alocação dinâmica de inodes, já que esse sistema de arquivos não os aloca em espaços fixos ou blocos e sim, aloca o tamanho exato que o arquivo precisa. Em sistemas baseados em inodes fixos, como o EXT3, o espaço no disco é alocado em blocos que variam de 512 a 4096 bytes ou até maior, caso o arquivo exceda um múltiplo exato do tamanho do bloco.
+Outra grande vantagem do ReiserFS é a alocação dinâmica de i-nodes, já que esse sistema de arquivos não os aloca em espaços fixos ou blocos e sim, aloca o tamanho exato que o arquivo precisa. Em sistemas baseados em i-nodes fixos, como o EXT3, o espaço no disco é alocado em blocos que variam de 512 a 4096 bytes ou até maior, caso o arquivo exceda um múltiplo exato do tamanho do bloco.
 
-Seu uso de funções hash e árvores balanceadas (B*), ao invés de seqüências infindáveis de inodes, tornam a procura de um arquivo em uma dezena ou em uma grande quantidade uma operação bem rápida.
+Seu uso de funções hash e árvores balanceadas (B*), ao invés de seqüências infindáveis de i-nodes, tornam a procura de um arquivo em uma dezena ou em uma grande quantidade uma operação bem rápida.
 
 No caso de um desligamento incorreto do sistema, o ReiserFS é capaz de recuperar a consistência do sistema de arquivos em frações de segundo e a possibilidade de perda de pastas ou partições é nula. Em compensação, os arquivos que eventualmente estiverem sendo gravados no exato momento em que acabou a energia ficarão com seus dados alterados. Você continuará tendo acesso aos arquivos normalmente, mas o conteúdo estará truncado ou incompleto.
 
